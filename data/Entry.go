@@ -1,0 +1,31 @@
+package data
+
+import (
+	"fmt"
+
+	"gorm.io/gorm"
+
+	database "github.com/AgusDOLARD/clipstory/db"
+)
+
+type Entry struct {
+	gorm.Model
+	Value string `gorm:"value"`
+}
+
+func (e *Entry) Save() error {
+	err := database.Db.Create(e).Error
+	if err != nil {
+		return fmt.Errorf("Entry Save Error: %w", err)
+	}
+	return nil
+}
+
+func GetEntries() ([]Entry, error) {
+	var entries []Entry
+	err := database.Db.Find(&entries).Error
+	if err != nil {
+		return nil, fmt.Errorf("Entry GetEntries Error: %w", err)
+	}
+	return entries, nil
+}
