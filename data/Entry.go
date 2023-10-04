@@ -23,7 +23,7 @@ func (e *Entry) Save() error {
 
 func GetEntries() ([]Entry, error) {
 	var entries []Entry
-	err := database.Db.Find(&entries).Error
+	err := database.Db.Order("created_at DESC").Find(&entries).Error
 	if err != nil {
 		return nil, fmt.Errorf("Entry GetEntries Error: %w", err)
 	}
