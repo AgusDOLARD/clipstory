@@ -1,7 +1,9 @@
 package data
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -14,6 +16,10 @@ type Entry struct {
 }
 
 func (e *Entry) Save() error {
+	e.Value = strings.TrimSpace(e.Value)
+	if e.Value == ""{
+		return errors.New("Entry is an empty string")
+	}
 	err := database.Db.Create(e).Error
 	if err != nil {
 		return fmt.Errorf("Entry Save Error: %w", err)
