@@ -15,6 +15,7 @@ import (
 type Socket struct {
 	addr     string
 	listener net.Listener
+	cancel   context.CancelFunc
 
 	clipsLock sync.Mutex
 	clips     []string
@@ -26,7 +27,10 @@ func NewSocket(addr string) *Socket {
 	}
 }
 
-func (s *Socket) Start() error {
+func (s *Socket) Start(ctx context.Context) error {
+	var cancelCtx context.Context
+	cancelCtx, s.cancel = context.WithCancel(ctx)
+
 	listener, err := net.Listen("unix", s.addr)
 	if err != nil {
 		return err
@@ -34,7 +38,7 @@ func (s *Socket) Start() error {
 	s.listener = listener
 
 	go func() {
-		newClip := clipboard.Watch(context.Background(), clipboard.FmtText)
+		newClip := clipboard.Watch(cancelCtx, clipboard.FmtText)
 		for clip := range newClip {
 			s.clipsLock.Lock()
 			s.clips = append(s.clips, string(clip))
@@ -42,7 +46,7 @@ func (s *Socket) Start() error {
 		}
 	}()
 
-	s.acceptLoop()
+	go s.acceptLoop(cancelCtx)
 	return nil
 }
 
@@ -52,19 +56,26 @@ func (s *Socket) Stop() error {
 		if err != nil {
 			return fmt.Errorf("failed to remove socket file: %w", err)
 		}
+		s.cancel()
 		return s.listener.Close()
 	}
 	return nil
 }
 
-func (s *Socket) acceptLoop() {
+func (s *Socket) acceptLoop(ctx context.Context) {
 	for {
-		conn, err := s.listener.Accept()
-		if err != nil {
-			fmt.Errorf("failed to accept connection: %w", err)
+
+		select {
+		case <-ctx.Done():
 			return
+		default:
+			conn, err := s.listener.Accept()
+			if err != nil {
+				fmt.Errorf("failed to accept connection: %w", err)
+				continue
+			}
+			go s.handleConn(conn)
 		}
-		go s.handleConn(conn)
 	}
 }
 
