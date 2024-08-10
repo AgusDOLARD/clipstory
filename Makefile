@@ -1,7 +1,6 @@
 INSTALLPATH = ${HOME}/.local/bin
 
 build:
-	@sqlc generate -f sqlc/sqlc.yml
 	@go build -o bin/clipstory cmd/clipstory/main.go
 	@go build -o bin/clipstoryd cmd/clipstoryd/main.go
 
