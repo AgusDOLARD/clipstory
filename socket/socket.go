@@ -1,16 +1,23 @@
 package socket
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
-	"strings"
+	"sync"
+
+	"golang.design/x/clipboard"
 )
 
 type Socket struct {
 	addr     string
 	listener net.Listener
-	clips    []string
+
+	clipsLock sync.Mutex
+	clips     []string
 }
 
 func NewSocket(addr string) *Socket {
@@ -25,6 +32,16 @@ func (s *Socket) Start() error {
 		return err
 	}
 	s.listener = listener
+
+	go func() {
+		newClip := clipboard.Watch(context.Background(), clipboard.FmtText)
+		for clip := range newClip {
+			s.clipsLock.Lock()
+			s.clips = append(s.clips, string(clip))
+			s.clipsLock.Unlock()
+		}
+	}()
+
 	s.acceptLoop()
 	return nil
 }
@@ -53,6 +70,22 @@ func (s *Socket) acceptLoop() {
 
 func (s *Socket) handleConn(conn net.Conn) {
 	defer conn.Close()
-	clips := strings.Join(s.clips, "\n")
-	conn.Write([]byte(clips))
+	pkt := MarshalPacket(s.clips)
+	conn.Write(pkt)
+}
+
+func GetClips(addr string) ([]string, error) {
+	conn, err := net.Dial("unix", addr)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	return UnmarshalPacket(buf.Bytes())
 }
