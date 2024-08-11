@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/AgusDOLARD/clipstory/cmd/commands"
+	"github.com/AgusDOLARD/clipstory/cmd/clipstory/commands"
 	"github.com/urfave/cli/v2"
 )
 
