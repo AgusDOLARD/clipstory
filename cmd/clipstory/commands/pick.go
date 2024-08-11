@@ -2,6 +2,7 @@ package commands
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/AgusDOLARD/clipstory/socket"
 	"github.com/charmbracelet/huh"
@@ -14,6 +15,14 @@ func (command *Command) Pick() *cli.Command {
 		Name:    "pick",
 		Aliases: []string{"p"},
 		Usage:   "Pick a clip",
+		Flags: []cli.Flag{
+			&cli.IntFlag{
+				Name:    "trunc",
+				Aliases: []string{"t"},
+				Usage:   "Truncate the clip to this length",
+				Value:   70,
+			},
+		},
 		Action: func(c *cli.Context) error {
 			clips, err := socket.GetClips(command.SocketPath)
 			if err != nil {
@@ -25,7 +34,7 @@ func (command *Command) Pick() *cli.Command {
 			}
 
 			var pick string
-			err = picker(clips, &pick)
+			err = picker(clips, &pick, c.Int("trunc"))
 			if err != nil {
 				if errors.Is(err, huh.ErrUserAborted) {
 					return nil
@@ -39,14 +48,29 @@ func (command *Command) Pick() *cli.Command {
 	}
 }
 
-func picker(clips []string, value *string) error {
+func picker(clips []string, value *string, truncate int) error {
 	return huh.NewSelect[string]().
 		Title("Pick a clip").
-		Options(huh.NewOptions(clips...)...).
+		OptionsFunc(func() []huh.Option[string] {
+			opts := make([]huh.Option[string], len(clips))
+			for i, clip := range clips {
+				opts[i] = huh.NewOption(truncateString(clip, truncate), clip)
+			}
+			return opts
+		}, nil).
 		// Filtering(true).
 		Value(value).
 		WithTheme(huh.ThemeBase16()).
 		Run()
+}
+
+func truncateString(s string, max int) string {
+	s = strings.TrimSpace(s)
+	s = strings.ReplaceAll(s, "\n", " ")
+	if len(s) > max {
+		return s[:max] + "..."
+	}
+	return s
 }
 
 func copyToClipboard(b []byte) error {
