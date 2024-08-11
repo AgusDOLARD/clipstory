@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"errors"
+
 	"github.com/AgusDOLARD/clipstory/socket"
 	"github.com/charmbracelet/huh"
 	"github.com/urfave/cli/v2"
@@ -19,12 +21,12 @@ func (command *Command) Pick() *cli.Command {
 			}
 
 			var pick string
-			err = huh.NewSelect[string]().
-				Title("Pick a clip").
-				Options(huh.NewOptions(clips...)...).
-				Filtering(true).
-				Value(&pick).Run()
+			err = picker(clips, pick)
 			if err != nil {
+				if errors.Is(err, huh.ErrUserAborted) {
+					return nil
+				}
+
 				return cli.Exit(err.Error(), 1)
 			}
 
@@ -32,4 +34,14 @@ func (command *Command) Pick() *cli.Command {
 			return nil
 		},
 	}
+}
+
+func picker(clips []string, value string) error {
+	return huh.NewSelect[string]().
+		Title("Pick a clip").
+		Options(huh.NewOptions(clips...)...).
+		Filtering(true).
+		Value(&value).
+		WithTheme(huh.ThemeBase16()).
+		Run()
 }
