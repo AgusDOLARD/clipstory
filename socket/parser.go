@@ -3,11 +3,12 @@ package socket
 import (
 	"encoding/binary"
 	"fmt"
+	"slices"
 	"strings"
 )
 
 const (
-	VERSION       = 1
+	VERSION       = 2
 	HEADER_LENGTH = 3 // 1 byte for version + 2 bytes for length
 )
 
@@ -45,5 +46,6 @@ func UnmarshalPacket(b []byte) ([]string, error) {
 
 	data := b[HEADER_LENGTH : HEADER_LENGTH+int(length)]
 	clips := strings.Split(string(data), "\r\n")
+	slices.Reverse(clips)
 	return clips, nil
 }
