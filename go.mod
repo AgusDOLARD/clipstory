@@ -4,6 +4,7 @@ go 1.21.6
 
 require (
 	github.com/charmbracelet/huh v0.5.2
+	github.com/charmbracelet/lipgloss v0.12.1
 	github.com/urfave/cli/v2 v2.27.3
 	golang.design/x/clipboard v0.7.0
 )
@@ -14,7 +15,6 @@ require (
 	github.com/catppuccin/go v0.2.0 // indirect
 	github.com/charmbracelet/bubbles v0.18.0 // indirect
 	github.com/charmbracelet/bubbletea v0.26.6 // indirect
-	github.com/charmbracelet/lipgloss v0.12.1 // indirect
 	github.com/charmbracelet/x/ansi v0.1.4 // indirect
 	github.com/charmbracelet/x/exp/strings v0.0.0-20240722160745-212f7b056ed0 // indirect
 	github.com/charmbracelet/x/input v0.1.3 // indirect
