@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 	"sync"
 
 	"golang.design/x/clipboard"
@@ -40,9 +41,12 @@ func (s *Socket) Start(ctx context.Context) error {
 	go func() {
 		newClip := clipboard.Watch(cancelCtx, clipboard.FmtText)
 		for clip := range newClip {
-			s.clipsLock.Lock()
-			s.clips = append(s.clips, string(clip))
-			s.clipsLock.Unlock()
+			c := string(clip)
+			if strings.TrimSpace(c) != "" {
+				s.clipsLock.Lock()
+				s.clips = append(s.clips, string(clip))
+				s.clipsLock.Unlock()
+			}
 		}
 	}()
 
